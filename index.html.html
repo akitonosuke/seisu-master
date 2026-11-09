@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>仕分けトレイ式 正負の数マスター</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FBF7EF;
+    --grid:#E7DFCE;
+    --ink:#23262B;
+    --ink-soft:#5B5A52;
+    --plus:#BF5B26;
+    --plus-soft:#F6E3D2;
+    --plus-deep:#8C4319;
+    --minus:#2C5F8A;
+    --minus-soft:#DCE7F0;
+    --minus-deep:#1E4665;
+    --good:#4C7A4A;
+    --bad:#B23A48;
+    --stamp:#C23B3B;
+    --card:#FFFDF8;
+    --shadow: 0 10px 30px rgba(35,38,43,0.08);
+    --radius: 18px;
+    --font-display:'Zen Maru Gothic','Hiragino Maru Gothic ProN','Yu Gothic',sans-serif;
+    --font-body:'Zen Kaku Gothic New','Hiragino Sans','Yu Gothic',sans-serif;
+    --font-mono:'SFMono-Regular',Consolas,'Courier New',monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      linear-gradient(90deg, transparent 39px, var(--grid) 40px),
+      linear-gradient(var(--paper), var(--paper));
+    background-size: 40px 100%, 100% 100%;
+    background-color:var(--paper);
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 27px, var(--grid) 28px),
+      repeating-linear-gradient(90deg, transparent, transparent 27px, var(--grid) 28px);
+    font-family:var(--font-body);
+    color:var(--ink);
+    padding:28px 16px 60px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{max-width:720px;margin:0 auto;}
+
+  /* header */
+  header{text-align:center;margin-bottom:22px;}
+  .eyebrow{
+    display:inline-block;font-family:var(--font-mono);font-size:12px;letter-spacing:.14em;
+    color:var(--ink-soft);border:1px solid var(--grid);background:var(--card);
+    padding:4px 12px;border-radius:999px;margin-bottom:10px;
+  }
+  h1{
+    font-family:var(--font-display);font-weight:900;font-size:clamp(24px,5vw,34px);
+    margin:0 0 8px;letter-spacing:.02em;
+  }
+  h1 span{color:var(--plus);}
+  .lead{color:var(--ink-soft);font-size:14px;line-height:1.7;max-width:520px;margin:0 auto;}
+
+  /* method rail - the signature element */
+  .rail{
+    display:flex;gap:10px;margin:22px 0 20px;
+  }
+  .rail-step{
+    flex:1;background:var(--card);border:1px solid var(--grid);border-radius:14px;
+    padding:12px 10px 14px;position:relative;overflow:hidden;transition:box-shadow .25s ease, transform .25s ease;
+  }
+  .rail-step.active{box-shadow:var(--shadow);transform:translateY(-2px);border-color:#D8CBAE;}
+  .rail-step .num{
+    font-family:var(--font-mono);font-size:11px;color:var(--ink-soft);letter-spacing:.08em;
+  }
+  .rail-step .label{font-family:var(--font-display);font-weight:700;font-size:13px;margin-top:2px;line-height:1.4;}
+  .stamp{
+    position:absolute;top:2px;right:6px;width:46px;height:46px;border-radius:50%;
+    border:2.5px solid var(--stamp);color:var(--stamp);display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-display);font-weight:900;font-size:15px;
+    transform:rotate(-14deg) scale(0);opacity:0;
+    transition:transform .35s cubic-bezier(.34,1.56,.64,1), opacity .2s ease;
+    pointer-events:none;
+  }
+  .rail-step.done .stamp{transform:rotate(-14deg) scale(1);opacity:.92;}
+
+  /* card */
+  .card{
+    background:var(--card);border:1px solid var(--grid);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:22px 20px 24px;
+  }
+  .level-row{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap;}
+  .level-btn{
+    font-family:var(--font-body);font-size:13px;font-weight:500;color:var(--ink-soft);
+    background:transparent;border:1px solid var(--grid);border-radius:999px;padding:7px 14px;cursor:pointer;
+    transition:all .15s ease;
+  }
+  .level-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+
+  .score-row{
+    display:flex;justify-content:center;gap:22px;font-family:var(--font-mono);
+    font-size:12.5px;color:var(--ink-soft);margin-bottom:18px;
+  }
+  .score-row b{color:var(--ink);font-size:15px;}
+
+  .expression{
+    text-align:center;font-family:var(--font-mono);font-weight:700;
+    font-size:clamp(24px,6vw,32px);letter-spacing:.02em;padding:18px 8px 22px;
+    color:var(--ink);
+  }
+  .expression .op{color:var(--ink-soft);margin:0 6px;}
+  .expression .num.pos{color:var(--plus-deep);}
+  .expression .num.neg{color:var(--minus-deep);}
+
+  .step-panel{border-top:1px dashed var(--grid);padding-top:18px;margin-top:6px;}
+  .step-title{font-family:var(--font-display);font-weight:700;font-size:15px;margin-bottom:4px;}
+  .step-sub{font-size:12.5px;color:var(--ink-soft);margin-bottom:14px;line-height:1.6;}
+
+  /* step1 term chooser */
+  .term-row{
+    display:flex;align-items:center;gap:12px;background:var(--paper);border:1px solid var(--grid);
+    border-radius:12px;padding:10px 12px;margin-bottom:10px;flex-wrap:wrap;
+  }
+  .term-row .orig{font-family:var(--font-mono);font-size:15px;color:var(--ink-soft);min-width:96px;}
+  .choice-btns{display:flex;gap:8px;margin-left:auto;}
+  .choice-btn{
+    font-family:var(--font-mono);font-weight:700;font-size:14px;padding:7px 14px;border-radius:9px;cursor:pointer;
+    border:1.5px solid var(--grid);background:#fff;transition:all .12s ease;
+  }
+  .choice-btn.plus{color:var(--plus-deep);}
+  .choice-btn.minus{color:var(--minus-deep);}
+  .choice-btn.correct{background:var(--good);border-color:var(--good);color:#fff;}
+  .choice-btn.wrong{animation:shake .3s ease;background:var(--bad);border-color:var(--bad);color:#fff;}
+  .term-row.solved{opacity:.55;}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-5px);}75%{transform:translateX(5px);}}
+
+  /* step2 trays */
+  .trays{display:flex;gap:14px;margin-bottom:16px;flex-wrap:wrap;}
+  .tray{flex:1;min-width:150px;border-radius:14px;padding:12px 14px;}
+  .tray.plus{background:var(--plus-soft);}
+  .tray.minus{background:var(--minus-soft);}
+  .tray-label{font-family:var(--font-display);font-weight:700;font-size:13px;margin-bottom:8px;}
+  .tray.plus .tray-label{color:var(--plus-deep);}
+  .tray.minus .tray-label{color:var(--minus-deep);}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+  .chip{
+    font-family:var(--font-mono);font-weight:700;font-size:13px;padding:4px 9px;border-radius:8px;background:#fff;
+  }
+  .tray.plus .chip{color:var(--plus-deep);border:1px solid #E7C4A3;}
+  .tray.minus .chip{color:var(--minus-deep);border:1px solid #B9CEDF;}
+  .tray input{
+    width:100%;border:none;border-bottom:2px solid rgba(0,0,0,.15);background:transparent;
+    font-family:var(--font-mono);font-size:18px;font-weight:700;padding:4px 2px;color:var(--ink);
+  }
+  .tray input:focus{outline:none;border-bottom-color:var(--ink);}
+
+  /* step3 compare bars */
+  .compare{margin-bottom:16px;}
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .bar-label{font-family:var(--font-mono);font-size:12px;width:36px;flex-shrink:0;}
+  .bar-track{flex:1;background:var(--grid);border-radius:6px;height:14px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:6px;transition:width .5s ease;}
+  .bar-fill.plus{background:var(--plus);}
+  .bar-fill.minus{background:var(--minus);}
+  .bar-val{font-family:var(--font-mono);font-size:13px;font-weight:700;width:30px;text-align:right;}
+
+  .answer-row{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:6px;}
+  .answer-row input{
+    width:110px;text-align:center;font-family:var(--font-mono);font-size:20px;font-weight:700;
+    border:2px solid var(--grid);border-radius:10px;padding:9px 6px;color:var(--ink);
+  }
+  .answer-row input:focus{outline:none;border-color:var(--ink);}
+
+  .btn{
+    font-family:var(--font-body);font-weight:700;font-size:14px;color:#fff;background:var(--ink);
+    border:none;border-radius:10px;padding:10px 20px;cursor:pointer;transition:transform .12s ease, opacity .12s ease;
+  }
+  .btn:hover{transform:translateY(-1px);}
+  .btn:active{transform:translateY(0);}
+  .btn.ghost{background:transparent;color:var(--ink-soft);border:1px solid var(--grid);}
+  .btn-row{display:flex;justify-content:center;gap:10px;margin-top:14px;}
+
+  .feedback{
+    font-size:13px;text-align:center;margin-top:10px;min-height:18px;line-height:1.6;
+  }
+  .feedback.bad{color:var(--bad);}
+  .feedback.hint{color:var(--ink-soft);}
+
+  .result-panel{text-align:center;padding-top:10px;}
+  .result-panel .big{
+    font-family:var(--font-display);font-weight:900;font-size:22px;color:var(--good);margin-bottom:4px;
+  }
+  .result-panel .sub{font-size:13px;color:var(--ink-soft);margin-bottom:14px;}
+
+  .hidden{display:none !important;}
+
+  footer{text-align:center;margin-top:22px;font-size:11.5px;color:var(--ink-soft);}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="eyebrow">中学1年 &middot; 正負の数</div>
+    <h1>仕分け<span>トレイ</span>式 正負の数マスター</h1>
+    <p class="lead">どんな式でも、いつもこの3ステップだけ。①減法を加法に直す　②＋の仲間・－の仲間に仕分けて合計　③2つの合計を比べて答えを出す。</p>
+  </header>
+
+  <div class="rail" id="rail">
+    <div class="rail-step" id="rail1">
+      <div class="num">STEP 1</div>
+      <div class="label">減法を<br>加法に直す</div>
+      <div class="stamp">済</div>
+    </div>
+    <div class="rail-step" id="rail2">
+      <div class="num">STEP 2</div>
+      <div class="label">仕分けて<br>合計する</div>
+      <div class="stamp">済</div>
+    </div>
+    <div class="rail-step" id="rail3">
+      <div class="num">STEP 3</div>
+      <div class="label">比べて<br>答えを出す</div>
+      <div class="stamp">済</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="level-row" id="levelRow">
+      <button class="level-btn" data-level="1">レベル1：たし算だけ</button>
+      <button class="level-btn" data-level="2">レベル2：ひき算あり</button>
+      <button class="level-btn" data-level="3">レベル3：3〜4項</button>
+    </div>
+    <div class="score-row">
+      <div>もんだい数 <b id="scoreTotal">0</b></div>
+      <div>連続正解 <b id="scoreStreak">0</b></div>
+    </div>
+
+    <div class="expression" id="expressionDisplay"></div>
+
+    <!-- STEP 1 -->
+    <div class="step-panel" id="step1Panel">
+      <div class="step-title">① 減法を加法に直そう</div>
+      <div class="step-sub">「－」でつながる項は符号を反対にして、全部「＋」でつなげる形にします。それぞれの項がたし算では何になるか選んでね。</div>
+      <div id="termList"></div>
+      <div class="feedback hint" id="step1Feedback"></div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step-panel hidden" id="step2Panel">
+      <div class="step-title">② ＋の仲間と－の仲間に仕分けて、それぞれ合計しよう</div>
+      <div class="step-sub">符号は考えず、絶対値（数の大きさ）だけをたし算します。</div>
+      <div class="trays">
+        <div class="tray plus">
+          <div class="tray-label">＋の仲間</div>
+          <div class="chips" id="plusChips"></div>
+          <input type="number" id="plusSumInput" placeholder="合計は？">
+        </div>
+        <div class="tray minus">
+          <div class="tray-label">－の仲間</div>
+          <div class="chips" id="minusChips"></div>
+          <input type="number" id="minusSumInput" placeholder="合計は？">
+        </div>
+      </div>
+      <div class="btn-row"><button class="btn" id="checkStep2">たしかめる</button></div>
+      <div class="feedback" id="step2Feedback"></div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step-panel hidden" id="step3Panel">
+      <div class="step-title">③ 2つの合計を比べて、答えを出そう</div>
+      <div class="step-sub">同符号なら足すだけ、異符号なら大きい方から小さい方を引いて、大きい方の符号をつけます。</div>
+      <div class="compare">
+        <div class="bar-row">
+          <div class="bar-label">＋</div>
+          <div class="bar-track"><div class="bar-fill plus" id="plusBar"></div></div>
+          <div class="bar-val" id="plusBarVal"></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">－</div>
+          <div class="bar-track"><div class="bar-fill minus" id="minusBar"></div></div>
+          <div class="bar-val" id="minusBarVal"></div>
+        </div>
+      </div>
+      <div class="answer-row">
+        <span style="font-family:var(--font-mono);font-size:15px;color:var(--ink-soft);">答え =</span>
+        <input type="text" id="finalAnswerInput" placeholder="例: -3">
+      </div>
+      <div class="btn-row"><button class="btn" id="checkStep3">こたえ合わせ</button></div>
+      <div class="feedback" id="step3Feedback"></div>
+    </div>
+
+    <!-- RESULT -->
+    <div class="result-panel hidden" id="resultPanel">
+      <div class="big" id="resultBig">せいかい！</div>
+      <div class="sub" id="resultSub"></div>
+      <button class="btn" id="nextBtn">つぎの問題へ</button>
+    </div>
+  </div>
+
+  <footer>いつでも同じ3ステップで解けば、どんな式もこわくない。</footer>
+</div>
+
+<script>
+(function(){
+  let level = 1;
+  let problem = null;
+  let scoreTotal = 0, scoreStreak = 0;
+  let problemHadMistake = false;
+
+  const els = {
+    levelRow: document.getElementById('levelRow'),
+    scoreTotal: document.getElementById('scoreTotal'),
+    scoreStreak: document.getElementById('scoreStreak'),
+    expression: document.getElementById('expressionDisplay'),
+    step1Panel: document.getElementById('step1Panel'),
+    step2Panel: document.getElementById('step2Panel'),
+    step3Panel: document.getElementById('step3Panel'),
+    resultPanel: document.getElementById('resultPanel'),
+    termList: document.getElementById('termList'),
+    step1Feedback: document.getElementById('step1Feedback'),
+    plusChips: document.getElementById('plusChips'),
+    minusChips: document.getElementById('minusChips'),
+    plusSumInput: document.getElementById('plusSumInput'),
+    minusSumInput: document.getElementById('minusSumInput'),
+    step2Feedback: document.getElementById('step2Feedback'),
+    checkStep2: document.getElementById('checkStep2'),
+    plusBar: document.getElementById('plusBar'),
+    minusBar: document.getElementById('minusBar'),
+    plusBarVal: document.getElementById('plusBarVal'),
+    minusBarVal: document.getElementById('minusBarVal'),
+    finalAnswerInput: document.getElementById('finalAnswerInput'),
+    checkStep3: document.getElementById('checkStep3'),
+    step3Feedback: document.getElementById('step3Feedback'),
+    resultBig: document.getElementById('resultBig'),
+    resultSub: document.getElementById('resultSub'),
+    nextBtn: document.getElementById('nextBtn'),
+    rail1: document.getElementById('rail1'),
+    rail2: document.getElementById('rail2'),
+    rail3: document.getElementById('rail3'),
+  };
+
+  function randInt(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
+  function flip(s){ return s === '+' ? '-' : '+'; }
+
+  function generateProblem(lv){
+    let termCount = lv === 3 ? (Math.random() < 0.5 ? 3 : 4) : 2;
+    let maxAbs = lv === 3 ? 9 : 12;
+    let terms = [];
+    for(let i=0;i<termCount;i++){
+      let intrinsicSign = Math.random() < 0.5 ? '+' : '-';
+      let abs = randInt(1, maxAbs);
+      let connector = i === 0 ? null : (lv === 1 ? '+' : (Math.random() < 0.5 ? '+' : '-'));
+      let combinedSign = i === 0 ? intrinsicSign : (connector === '-' ? flip(intrinsicSign) : intrinsicSign);
+      terms.push({ intrinsicSign, abs, connector, combinedSign, chosen:null, solved:false });
+    }
+    let positiveSum = terms.filter(t=>t.combinedSign==='+').reduce((a,t)=>a+t.abs,0);
+    let negativeSum = terms.filter(t=>t.combinedSign==='-').reduce((a,t)=>a+t.abs,0);
+    let finalAnswer = positiveSum - negativeSum;
+    return { terms, positiveSum, negativeSum, finalAnswer };
+  }
+
+  function renderExpression(){
+    let html = '';
+    problem.terms.forEach((t,i)=>{
+      if(i===0){
+        html += `<span class="num ${t.intrinsicSign==='-'?'neg':'pos'}">${t.intrinsicSign==='-'?'−'+t.abs:t.abs}</span>`;
+      } else {
+        html += `<span class="op">${t.connector==='-'?'−':'＋'}</span>`;
+        if(t.intrinsicSign==='-'){
+          html += `<span class="num neg">(−${t.abs})</span>`;
+        } else {
+          html += `<span class="num pos">${t.abs}</span>`;
+        }
+      }
+    });
+    els.expression.innerHTML = html;
+  }
+
+  function renderStep1(){
+    els.termList.innerHTML = '';
+    els.step1Feedback.textContent = '';
+    problem.terms.forEach((t,i)=>{
+      if(i===0) return; // first term needs no conversion
+      const row = document.createElement('div');
+      row.className = 'term-row';
+      row.id = 'term-row-'+i;
+      const origText = `${t.connector==='-'?'−':'＋'} ${t.intrinsicSign==='-'?'(−'+t.abs+')':t.abs}`;
+      row.innerHTML = `
+        <div class="orig">${origText} →</div>
+        <div class="choice-btns">
+          <button class="choice-btn plus" data-idx="${i}" data-sign="+">＋${t.abs}</button>
+          <button class="choice-btn minus" data-idx="${i}" data-sign="-">−${t.abs}</button>
+        </div>`;
+      els.termList.appendChild(row);
+    });
+    els.termList.querySelectorAll('.choice-btn').forEach(btn=>{
+      btn.addEventListener('click', onTermChoice);
+    });
+    checkStep1Complete();
+  }
+
+  function onTermChoice(e){
+    const btn = e.currentTarget;
+    const idx = parseInt(btn.dataset.idx,10);
+    const sign = btn.dataset.sign;
+    const t = problem.terms[idx];
+    if(t.solved) return;
+    if(sign === t.combinedSign){
+      btn.classList.add('correct');
+      t.solved = true;
+      document.getElementById('term-row-'+idx).classList.add('solved');
+      els.step1Feedback.textContent = '';
+      els.step1Feedback.className = 'feedback hint';
+      checkStep1Complete();
+    } else {
+      problemHadMistake = true;
+      btn.classList.add('wrong');
+      setTimeout(()=>btn.classList.remove('wrong'), 300);
+      els.step1Feedback.textContent = '「－」は符号を反対に、「＋」はそのまま。もう一度考えてみよう。';
+      els.step1Feedback.className = 'feedback bad';
+    }
+  }
+
+  function checkStep1Complete(){
+    const allSolved = problem.terms.every(t=>t.solved || t === problem.terms[0]);
+    if(allSolved){
+      markRailDone(1);
+      els.step2Panel.classList.remove('hidden');
+      renderStep2();
+      setRailActive(2);
+    }
+  }
+
+  function renderStep2(){
+    els.plusChips.innerHTML = '';
+    els.minusChips.innerHTML = '';
+    problem.terms.filter(t=>t.combinedSign==='+').forEach(t=>{
+      const c = document.createElement('span');
+      c.className='chip'; c.textContent = '＋'+t.abs;
+      els.plusChips.appendChild(c);
+    });
+    problem.terms.filter(t=>t.combinedSign==='-').forEach(t=>{
+      const c = document.createElement('span');
+      c.className='chip'; c.textContent = '−'+t.abs;
+      els.minusChips.appendChild(c);
+    });
+    els.plusSumInput.value = '';
+    els.minusSumInput.value = '';
+    els.step2Feedback.textContent = '';
+  }
+
+  els.checkStep2.addEventListener('click', ()=>{
+    const p = parseInt(els.plusSumInput.value, 10);
+    const m = parseInt(els.minusSumInput.value, 10);
+    if(isNaN(p) || isNaN(m)){
+      els.step2Feedback.textContent = '両方のマスに数を入れてね。';
+      els.step2Feedback.className = 'feedback bad';
+      return;
+    }
+    if(p === problem.positiveSum && m === problem.negativeSum){
+      markRailDone(2);
+      els.step3Panel.classList.remove('hidden');
+      renderStep3();
+      setRailActive(3);
+      els.step2Feedback.textContent = '';
+    } else {
+      problemHadMistake = true;
+      els.step2Feedback.textContent = '絶対値（符号を取った大きさ）だけをたし算しよう。もう一度確かめてね。';
+      els.step2Feedback.className = 'feedback bad';
+    }
+  });
+
+  function renderStep3(){
+    const maxVal = Math.max(problem.positiveSum, problem.negativeSum, 1);
+    els.plusBar.style.width = (problem.positiveSum/maxVal*100)+'%';
+    els.minusBar.style.width = (problem.negativeSum/maxVal*100)+'%';
+    els.plusBarVal.textContent = problem.positiveSum;
+    els.minusBarVal.textContent = problem.negativeSum;
+    els.finalAnswerInput.value = '';
+    els.step3Feedback.textContent = '';
+  }
+
+  function normalizeAnswer(str){
+    if(!str) return NaN;
+    let s = str.trim();
+    s = s.replace(/[－ー−‐]/g, '-').replace(/＋/g,'+').replace(/\s+/g,'');
+    if(s === '' || s === '+' || s === '-') return NaN;
+    const n = Number(s);
+    return n;
+  }
+
+  els.checkStep3.addEventListener('click', ()=>{
+    const val = normalizeAnswer(els.finalAnswerInput.value);
+    if(isNaN(val)){
+      els.step3Feedback.textContent = '数字で答えを入れてね（例: -3 や 5）。';
+      els.step3Feedback.className = 'feedback bad';
+      return;
+    }
+    if(val === problem.finalAnswer){
+      markRailDone(3);
+      showResult(true);
+    } else {
+      problemHadMistake = true;
+      els.step3Feedback.textContent = '大きい方の合計から小さい方の合計を引いて、大きい方の符号をつけよう。';
+      els.step3Feedback.className = 'feedback bad';
+    }
+  });
+
+  function showResult(success){
+    els.step3Panel.classList.add('hidden');
+    els.resultPanel.classList.remove('hidden');
+    scoreTotal++;
+    if(!problemHadMistake){ scoreStreak++; } else { scoreStreak = 0; }
+    els.scoreTotal.textContent = scoreTotal;
+    els.scoreStreak.textContent = scoreStreak;
+    els.resultBig.textContent = problemHadMistake ? 'せいかい！（よくがんばった）' : 'せいかい！ノーミス！';
+    els.resultSub.textContent = `答えは ${problem.finalAnswer} だよ。いつも同じ3ステップで解けたね。`;
+  }
+
+  function setRailActive(step){
+    [els.rail1, els.rail2, els.rail3].forEach((r,i)=>{
+      r.classList.toggle('active', i === step-1);
+    });
+  }
+  function markRailDone(step){
+    document.getElementById('rail'+step).classList.add('done');
+  }
+  function resetRail(){
+    [els.rail1, els.rail2, els.rail3].forEach(r=>{
+      r.classList.remove('done'); r.classList.remove('active');
+    });
+    setRailActive(1);
+  }
+
+  function newProblem(){
+    problem = generateProblem(level);
+    problemHadMistake = false;
+    resetRail();
+    renderExpression();
+    els.step1Panel.classList.remove('hidden');
+    els.step2Panel.classList.add('hidden');
+    els.step3Panel.classList.add('hidden');
+    els.resultPanel.classList.add('hidden');
+    renderStep1();
+  }
+
+  els.nextBtn.addEventListener('click', newProblem);
+
+  els.levelRow.querySelectorAll('.level-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      els.levelRow.querySelectorAll('.level-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      level = parseInt(btn.dataset.level,10);
+      newProblem();
+    });
+  });
+  els.levelRow.querySelector('[data-level="1"]').classList.add('active');
+
+  newProblem();
+})();
+</script>
+</body>
+</html>
